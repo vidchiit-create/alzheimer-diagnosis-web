@@ -8,15 +8,9 @@ import torch.nn.functional as F
 from monai.networks.nets import DenseNet121
 from captum.attr import GradientShap, LayerGradCam
 
-# --- TỰ ĐỘNG TẢI MODEL CHECKPOINT TỪ GOOGLE DRIVE NẾU CHƯA CÓ ---
-CHECKPOINT_PATH = "model_checkpoint.pth"
-if not os.path.exists(CHECKPOINT_PATH):
-    file_id = "197KRcZsT6UpNWdXb0BNXms7rtkF8o_I"
-    url = f"https://drive.google.com/uc?id={file_id}"
-    print("Đang tải model checkpoint từ Google Drive...")
-    gdown.download(url, CHECKPOINT_PATH, quiet=False)
-
 st.set_page_config(page_title="Hệ thống Chẩn đoán Alzheimer", layout="wide")
+
+CHECKPOINT_PATH = "model_checkpoint.pth"
 
 # ==========================================
 # 1. CÁC HÀM XAI & COUNTERFACTUAL
@@ -41,6 +35,13 @@ def compute_counterfactual_delta_map(target_img_np, cn_template_np):
 # ==========================================
 @st.cache_resource
 def load_system():
+    # Tự động tải checkpoint từ Google Drive với fuzzy=True nếu chưa tồn tại
+    if not os.path.exists(CHECKPOINT_PATH):
+        file_id = "197KRcZsT6UpNWdXb0BNXms7rtkF8o_I"
+        url = f"https://drive.google.com/uc?id={file_id}"
+        print("Đang tải model checkpoint từ Google Drive...")
+        gdown.download(url, CHECKPOINT_PATH, quiet=False, fuzzy=True)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DenseNet121(spatial_dims=3, in_channels=1, out_channels=3).to(device)
     
@@ -116,7 +117,7 @@ if uploaded_file is not None:
     plt.subplot(2, 2, 2)
     plt.imshow(img_np[:, :, slice_idx], cmap='gray')
     plt.imshow(atrophy_map[:, :, slice_idx], cmap='hot', alpha=0.6, vmin=0, vmax=vmax_delta)
-    plt.title("[2] Bản đồ teo dịch não\n(Vàng/Đỏ: Vùng teo mô so với chuẩn)", fontweight='bold')
+    plt.title("[2] Bản đồ teo dịch nào\n(Vàng/Đỏ: Vùng teo mô so với chuẩn)", fontweight='bold')
     plt.axis('off')
     
     # Khung 3: Grad-CAM
