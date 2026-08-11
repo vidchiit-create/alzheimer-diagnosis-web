@@ -5,4 +5,4 @@ monai
 captum
 matplotlib
 numpy
-gdown
+requests
